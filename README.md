@@ -1,307 +1,197 @@
-# Guía Profesional para Redacción de Prompts
-
-En esta lección, practicarás dos principios fundamentales de redacción de prompts y sus tácticas relacionadas para escribir instrucciones efectivas para modelos de lenguaje a gran escala.
+# Transformación
+En este cuaderno, exploraremos cómo usar los modelos de lenguaje grande para tareas de transformación de texto, como la traducción de idiomas, la corrección ortográfica y gramatical, el ajuste del tono y la conversión de formato.
 
 ## Configuración
-#### Cargar la clave API y las bibliotecas de Python relevantes
-
-En este curso, hemos proporcionado un código que carga la clave API de OpenAI por ti.
 
 ```python
 import openai
 import os
 
 from dotenv import load_dotenv, find_dotenv
-_ = load_dotenv(find_dotenv())
+_ = load_dotenv(find_dotenv()) # leer el archivo .env local
 
 openai.api_key  = os.getenv('OPENAI_API_KEY')
-```
 
-#### Función auxiliar
-A lo largo de este curso, utilizaremos el modelo `gpt-3.5-turbo` de OpenAI y el [endpoint de chat completions](https://platform.openai.com/docs/guides/chat).
-
-Esta función auxiliar facilitará el uso de prompts y la visualización de los resultados generados.
-**Nota**: En junio de 2023, OpenAI actualizó gpt-3.5-turbo. Los resultados que ves en el cuaderno pueden ser ligeramente diferentes a los del video. Algunos de los prompts también han sido ligeramente modificados para producir los resultados deseados.
-
-```python
-def get_completion(prompt, model="gpt-3.5-turbo"):
+def get_completion(prompt, model="gpt-3.5-turbo", temperature=0): 
     messages = [{"role": "user", "content": prompt}]
     response = openai.ChatCompletion.create(
         model=model,
         messages=messages,
-        temperature=0, # este es el grado de aleatoriedad en la salida del modelo
+        temperature=temperature, 
     )
     return response.choices[0].message["content"]
 ```
 
-**Nota:** Este y todos los demás cuadernos de laboratorio de este curso usan la versión `0.27.0` de la biblioteca de OpenAI.
+## Traducción
 
-Para usar la versión `1.0.0` de la biblioteca de OpenAI, aquí está el código que usarías en su lugar para la función `get_completion`:
+ChatGPT está entrenado con fuentes en muchos idiomas, lo que le da la capacidad de traducir. Aquí hay algunos ejemplos de cómo usar esta capacidad.
 
 ```python
-client = openai.OpenAI()
-
-def get_completion(prompt, model="gpt-3.5-turbo"):
-    messages = [{"role": "user", "content": prompt}]
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        temperature=0
-    )
-    return response.choices[0].message.content
+prompt = f"""
+Translate the following English text to Spanish: \ 
+```Hi, I would like to order a blender```
+"""
+response = get_completion(prompt)
+print(response)
 ```
 
-## Principios de Redacción de Prompts
-- **Principio 1: Escribe instrucciones claras y específicas**
-- **Principio 2: Dale tiempo al modelo para "pensar"**
+```python
+prompt = f"""
+Tell me which language this is: 
+```Combien coûte le lampadaire?```
+"""
+response = get_completion(prompt)
+print(response)
+```
 
-### Tácticas
+```python
+prompt = f"""
+Translate the following text to French and Spanish
+and English pirate: \
+```I want to order a basketball```
+"""
+response = get_completion(prompt)
+print(response)
+```
 
-#### Táctica 1: Usa delimitadores para indicar claramente partes distintas del input
-- Los delimitadores pueden ser cualquier cosa como: ```, """, < >, `<tag> </tag>`, `:`
+```python
+prompt = f"""
+Translate the following text to Spanish in both the \
+formal and informal forms: 
+'Would you like to order a pillow?'
+"""
+response = get_completion(prompt)
+print(response)
+```
+
+### Traductor universal
+
+Imagina que estás a cargo de TI en una gran empresa multinacional de comercio electrónico. Los usuarios te envían mensajes con problemas de TI en todos sus idiomas nativos. Tu personal es de todo el mundo y solo habla sus idiomas nativos. ¡Necesitas un traductor universal!
+
+```python
+user_messages = [
+  "La performance du système est plus lente que d'habitude.",  # El rendimiento del sistema es más lento de lo habitual.
+  "Mi monitor tiene píxeles que no se iluminan.",              # Mi monitor tiene píxeles que no se iluminan.
+  "Il mio mouse non funziona",                                 # Mi mouse no funciona.
+  "Mój klawisz Ctrl jest zepsuty",                             # Mi teclado tiene una tecla Ctrl rota.
+  "我的屏幕在闪烁"                                               # Mi pantalla está parpadeando.
+] 
+
+for issue in user_messages:
+    prompt = f"Tell me what language this is: ```{issue}```"
+    lang = get_completion(prompt)
+    print(f"Original message ({lang}): {issue}")
+
+    prompt = f"""
+    Translate the following  text to English \
+    and Korean: ```{issue}```
+    """
+    response = get_completion(prompt)
+    print(response, "\n")
+```
+
+## ¡Inténtalo tú mismo!
+¡Prueba algunas traducciones por tu cuenta!
+
+## Transformación de tono
+
+La escritura puede variar según el público objetivo. ChatGPT puede producir diferentes tonos.
+
+```python
+prompt = f"""
+Translate the following from slang to a business letter: 
+'Dude, This is Joe, check out this spec on this standing lamp.'
+"""
+response = get_completion(prompt)
+print(response)
+```
+
+## Conversión de formato
+
+ChatGPT puede traducir entre formatos. El aviso debe describir los formatos de entrada y salida.
+
+```python
+data_json = { "resturant employees" :[ 
+    {"name":"Shyam", "email":"shyamjaiswal@gmail.com"},
+    {"name":"Bob", "email":"bob32@gmail.com"},
+    {"name":"Jai", "email":"jai87@gmail.com"}
+]}
+
+prompt = f"""
+Translate the following python dictionary from JSON to an HTML \
+table with column headers and title: {data_json}
+"""
+response = get_completion(prompt)
+print(response)
+
+from IPython.display import display, Markdown, Latex, HTML, JSON
+display(HTML(response))
+```
+
+## Revisión ortográfica y gramatical
+
+Aquí hay algunos ejemplos de problemas comunes de gramática y ortografía y la respuesta del LLM.
+
+Para señalar al LLM que deseas que revise tu texto, le indicas al modelo que 'revise' o 'revise y corrija'.
+
+```python
+text = [ 
+  "The girl with the black and white puppies have a ball.",  # The girl has a ball.
+  "Yolanda has her notebook.", # ok
+  "Its going to be a long day. Does the car need it’s oil changed?",  # Homophones
+  "Their goes my freedom. There going to bring they’re suitcases.",  # Homophones
+  "Your going to need you’re notebook.",  # Homophones
+  "That medicine effects my ability to sleep. Have you heard of the butterfly affect?", # Homophones
+  "This phrase is to cherck chatGPT for speling abilitty"  # spelling
+]
+
+for t in text:
+    prompt = f"""Proofread and correct the following text
+    and rewrite the corrected version. If you don't find
+    and errors, just say "No errors found". Don't use 
+    any punctuation around the text:
+    ```{t}```"""
+    response = get_completion(prompt)
+    print(response)
+```
 
 ```python
 text = f"""
-Debes expresar lo que quieres que haga un modelo proporcionando instrucciones lo más claras y específicas posible. Esto guiará al modelo hacia el resultado deseado y reducirá las posibilidades de recibir respuestas irrelevantes o incorrectas. No confundas escribir un prompt claro con escribir un prompt corto. En muchos casos, los prompts más largos proporcionan más claridad y contexto para el modelo, lo que puede llevar a resultados más detallados y relevantes.
+Got this for my daughter for her birthday cuz she keeps taking \
+mine from my room.  Yes, adults also like pandas too.  She takes \
+it everywhere with her, and it's super soft and cute.  One of the \
+ears is a bit lower than the other, and I don't think that was \
+designed to be asymmetrical. It's a bit small for what I paid for it \
+though. I think there might be other options that are bigger for \
+the same price.  It arrived a day earlier than expected, so I got \
+to play with it myself before I gave it to my daughter.
 """
-prompt = f"""
-Resume el texto delimitado por comillas triples en una sola oración.
-```{text}```
-"""
+prompt = f"proofread and correct this review: ```{text}```"
 response = get_completion(prompt)
 print(response)
-```
 
-#### Táctica 2: Pide una salida estructurada
-- JSON, HTML
+from redlines import Redlines
+
+diff = Redlines(text,response)
+display(Markdown(diff.output_markdown))
+```
 
 ```python
 prompt = f"""
-Genera una lista de tres títulos de libros ficticios junto con sus autores y géneros. Proporciónalos en formato JSON con las siguientes claves: book_id, title, author, genre.
+proofread and correct this review. Make it more compelling. 
+Ensure it follows APA style guide and targets an advanced reader. 
+Output in markdown format.
+Text: ```{text}```
 """
 response = get_completion(prompt)
-print(response)
+display(Markdown(response))
 ```
 
-#### Táctica 3: Pide al modelo que verifique si se cumplen las condiciones
+## ¡Inténtalo tú mismo!
+¡Intenta cambiar las instrucciones para formar tu propia revisión!
 
-```python
-text_1 = f"""
-¡Hacer una taza de té es fácil! Primero, necesitas hervir agua. Mientras tanto, toma una taza y pon una bolsa de té en ella. Una vez que el agua esté lo suficientemente caliente, simplemente viértela sobre la bolsa de té. Déjala reposar un poco para que el té se infusione. Después de unos minutos, saca la bolsa de té. Si lo deseas, puedes agregar un poco de azúcar o leche al gusto. ¡Y eso es todo! Tienes una deliciosa taza de té para disfrutar.
-"""
-prompt = f"""
-Se te proporcionará un texto delimitado por comillas triples. Si contiene una secuencia de instrucciones, reescribe esas instrucciones en el siguiente formato:
+---
 
-Paso 1 - ...
-Paso 2 - …
-…
-Paso N - …
+Gracias a los siguientes sitios:
 
-Si el texto no contiene una secuencia de instrucciones, simplemente escribe "No se proporcionaron pasos."
-
-\"\"\"{text_1}\"\"\"
-"""
-response = get_completion(prompt)
-print("Resultado para el Texto 1:")
-print(response)
-
-text_2 = f"""
-El sol brilla intensamente hoy, y los pájaros cantan. Es un día hermoso para dar un paseo por el parque. Las flores están en plena floración, y los árboles se balancean suavemente con la brisa. La gente está fuera, disfrutando del buen tiempo. Algunos están haciendo picnics, mientras que otros juegan o simplemente se relajan en el césped. Es un día perfecto para pasar tiempo al aire libre y apreciar la belleza de la naturaleza.
-"""
-prompt = f"""
-Se te proporcionará un texto delimitado por comillas triples. Si contiene una secuencia de instrucciones, reescribe esas instrucciones en el siguiente formato:
-
-Paso 1 - ...
-Paso 2 - …
-…
-Paso N - …
-
-Si el texto no contiene una secuencia de instrucciones, simplemente escribe "No se proporcionaron pasos."
-
-\"\"\"{text_2}\"\"\"
-"""
-response = get_completion(prompt)
-print("Resultado para el Texto 2:")
-print(response)
-```
-
-#### Táctica 4: Prompting de "pocos disparos" (Few-shot prompting)
-
-```python
-prompt = f"""
-Tu tarea es responder en un estilo consistente.
-
-<niño>: Enséñame sobre la paciencia.
-
-<abuelo>: El río que talla el valle más profundo fluye de un modesto manantial; la sinfonía más grandiosa se origina en una sola nota; el tapiz más intrincado comienza con un solo hilo.
-
-<niño>: Enséñame sobre la resiliencia.
-"""
-response = get_completion(prompt)
-print(response)
-```
-
-### Principio 2: Dale tiempo al modelo para “pensar”
-
-#### Táctica 1: Especifica los pasos necesarios para completar una tarea
-
-```python
-text = f"""
-En un encantador pueblo, los hermanos Jack y Jill emprendieron una búsqueda para recoger agua de un pozo en la cima de una colina. Mientras subían, cantando alegremente, la desgracia los golpeó: Jack tropezó con una piedra y rodó colina abajo, seguido por Jill. Aunque un poco magullados, regresaron a casa con abrazos reconfortantes. A pesar del percance, su espíritu aventurero permaneció intacto, y continuaron explorando con deleite.
-"""
-# ejemplo 1
-prompt_1 = f"""
-Realiza las siguientes acciones:
-1 - Resume el siguiente texto delimitado por comillas triples en una sola oración.
-2 - Traduce el resumen al francés.
-3 - Enumera cada nombre en el resumen en francés.
-4 - Produce un objeto JSON que contenga las siguientes claves: french_summary, num_names.
-
-Separa tus respuestas con saltos de línea.
-
-Texto:
-```{text}```
-"""
-response = get_completion(prompt_1)
-print("Resultado para el prompt 1:")
-print(response)
-
-# ejemplo 2
-prompt_2 = f"""
-Tu tarea es realizar las siguientes acciones:
-1 - Resume el siguiente texto delimitado por <> en una sola oración.
-2 - Traduce el resumen al francés.
-3 - Enumera cada nombre en el resumen en francés.
-4 - Produce un objeto JSON que contenga las claves french_summary y num_names.
-
-Usa el siguiente formato:
-Texto: <texto a resumir>
-Resumen: <resumen>
-Traducción: <traducción del resumen>
-Nombres: <lista de nombres en el resumen>
-JSON de salida: <json con resumen y num_names>
-
-Texto: <{text}>
-"""
-response = get_completion(prompt_2)
-print("\nResultado para el prompt 2:")
-print(response)
-```
-
-#### Táctica 2: Indicar al modelo que trabaje su propia solución antes de apresurarse a una conclusión
-
-```python
-prompt = f"""
-Determina si la solución del estudiante es correcta o no.
-
-Pregunta:
-Estoy construyendo una instalación de energía solar y necesito ayuda con los cálculos financieros.
-- El terreno cuesta $100 / pie cuadrado
-- Puedo comprar paneles solares por $250 / pie cuadrado
-- Negocié un contrato de mantenimiento que me costará $100k al año, y $10 / pie cuadrado adicionales
-¿Cuál es el costo total para el primer año de operaciones en función del número de pies cuadrados?
-
-Solución del estudiante:
-Sea x el tamaño de la instalación en pies cuadrados.
-Costos:
-1. Costo del terreno: 100x
-2. Costo de los paneles solares: 250x
-3. Costo de mantenimiento: 100,000 + 10x
-Costo total: 100x + 250x + 100,000 + 10x = 360x + 100,000
-"""
-response = get_completion(prompt)
-print(response)
-
-# Indicar al modelo que resuelva el problema antes de evaluar la solución del estudiante
-
-prompt = f"""
-Tu tarea es determinar si la solución del estudiante
-
- es correcta o no.
-Para resolver el problema haz lo siguiente:
-- Primero, resuelve tú mismo el problema incluyendo el costo total final.
-- Luego compara tu solución con la del estudiante y evalúa si la solución del estudiante es correcta o no.
-No decidas si la solución del estudiante es correcta hasta que hayas resuelto el problema tú mismo.
-
-Usa el siguiente formato:
-Pregunta:
-```
-pregunta aquí
-```
-Solución del estudiante:
-```
-solución del estudiante aquí
-```
-Solución real:
-```
-pasos para resolver el problema y tu solución aquí
-```
-¿Es la solución del estudiante la misma que la solución real recién calculada?
-```
-sí o no
-```
-Calificación del estudiante:
-```
-correcto o incorrecto
-```
-
-Pregunta:
-```
-Estoy construyendo una instalación de energía solar y necesito ayuda con los cálculos financieros.
-- El terreno cuesta $100 / pie cuadrado
-- Puedo comprar paneles solares por $250 / pie cuadrado
-- Negocié un contrato de mantenimiento que me costará $100k al año, y $10 / pie cuadrado adicionales
-¿Cuál es el costo total para el primer año de operaciones en función del número de pies cuadrados?
-```
-Solución del estudiante:
-```
-Sea x el tamaño de la instalación en pies cuadrados.
-Costos:
-1. Costo del terreno: 100x
-2. Costo de los paneles solares: 250x
-3. Costo de mantenimiento: 100,000 + 10x
-Costo total: 100x + 250x + 100,000 + 10x = 360x + 100,000
-```
-Solución real:
-"""
-response = get_completion(prompt)
-print(response)
-```
-
-## Limitaciones del Modelo: Alucinaciones
-- Boie es una empresa real, pero el nombre del producto no es real.
-
-```python
-prompt = f"""
-Cuéntame sobre el cepillo de dientes inteligente AeroGlide UltraSlim de Boie.
-"""
-response = get_completion(prompt)
-print(response)
-```
-
-## Prueba a experimentar por tu cuenta
-
-#### Notas sobre el uso de la API de OpenAI fuera de este aula
-
-Para instalar la biblioteca de Python de OpenAI:
-```
-!pip install openai
-```
-
-La biblioteca necesita ser configurada con la clave secreta de tu cuenta, la cual está disponible en el [sitio web](https://platform.openai.com/account/api-keys).
-
-Puedes establecerla como la variable de entorno `OPENAI_API_KEY` antes de usar la biblioteca:
-```
-!export OPENAI_API_KEY='sk-...'
-```
-
-O, establece `openai.api_key` a su valor:
-
-```python
-import openai
-openai.api_key = "sk-..."
-```
-
-#### Una nota sobre la barra invertida
-- En el curso, estamos usando una barra invertida `\` para hacer que el texto quepa en la pantalla sin insertar caracteres de nueva línea '\n'.
-- GPT-3 no se ve realmente afectado si insertas o no caracteres de nueva línea. Pero al trabajar con LLMs en general, puedes considerar si los caracteres de nueva línea en tu prompt pueden afectar el rendimiento del modelo.
+https://writingprompts.com/bad-grammar-examples/
